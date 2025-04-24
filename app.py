@@ -4,9 +4,10 @@ import numpy as np
 import json
 import pandas as pd
 import joblib
+from hive_health import compute_hive_health  # Import the function from hive_health.py
 
 # Load the trained model from the .pkl file
-model = joblib.load('random_forest_model.pkl')
+model = joblib.load('random_forest_model_test.pkl')
 
 # Function to extract selected audio features
 def extract_features(audio_file_path, sample_rate=22050):
@@ -101,6 +102,14 @@ def main():
         with open('extracted_features.json', 'r') as f:
             extracted_data = json.load(f)
         
+        # Compute Hive Health Score and Category using the external function
+        hive_health_score, health_category = compute_hive_health(extracted_data)
+        
+        # Show the Hive Health Score and Category
+        st.subheader("Hive Health Score")
+        st.write(f"Score: {hive_health_score:.2f}%")
+        st.write(f"Category: {health_category}")
+
         # Prepare input for the model
         input_features = [
             extracted_data['hive_temperature'],
@@ -117,12 +126,8 @@ def main():
             extracted_data['MFCC_4'], extracted_data['MFCC_5'], extracted_data['MFCC_6'],
             extracted_data['MFCC_7'], extracted_data['MFCC_8'], extracted_data['MFCC_9'],
             extracted_data['MFCC_10'], extracted_data['MFCC_11'], extracted_data['MFCC_12'], extracted_data['MFCC_13']
-              
-              
         ]
         input_features = np.array(input_features).reshape(1, -1)
-        print("Input features shape:", input_features.shape)
-        print("Input features:", input_features)    
         
         # Make prediction
         prediction = model.predict(input_features)

@@ -9,6 +9,18 @@ from hive_health import compute_hive_health  # Import the function from hive_hea
 # Load the trained model from the .pkl file
 model = joblib.load('random_forest_model_test.pkl')
 
+# Function to convert numpy types to native Python types (recursively for nested structures)
+def convert_numpy_types(obj):
+    if isinstance(obj, np.int64):
+        return int(obj)
+    elif isinstance(obj, np.float64):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    return obj
+
 # Function to extract selected audio features
 def extract_features(audio_file_path, sample_rate=22050):
     # Load the audio file
@@ -134,6 +146,22 @@ def main():
         
         st.subheader("Prediction Result")
         st.write(f"Predicted Class: {prediction[0]}")
+        
+        # Prepare a new dictionary for the results file
+        results_data = {
+            "hive_health_score": hive_health_score,
+            "health_category": health_category,
+            "predicted_class": prediction[0]
+        }
+        
+        # Convert all numpy types to native Python types before saving to JSON
+        results_data = convert_numpy_types(results_data)
+        
+        # Save the Hive Health and Prediction Results to a separate JSON file
+        with open('prediction_results.json', 'w') as results_file:
+            json.dump(results_data, results_file, indent=4)
+        
+        st.success("Prediction results saved to 'prediction_results.json'")
 
 if __name__ == "__main__":
     main()
